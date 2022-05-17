@@ -1,0 +1,21 @@
+{
+    "version": "1.0",
+    "indexPath": "",
+    "matches": [
+        {
+            "paths": [
+                "D:\\tmp"
+            ],
+            "patterns": [
+                "*.txt",
+                "*.docx",
+                "*.xlsx"
+            ],
+            "ignores": [
+                ".svn",
+                ".git"
+            ]
+        }
+    ],
+    "maxFileSizeMB": 5
+}
