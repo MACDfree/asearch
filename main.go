@@ -251,6 +251,10 @@ func findFiles(paths []string, matchs []string, ignores []string) <-chan *FileIn
 				if info.Size() > config.Conf.MaxFileSize*1024*1024 {
 					return nil
 				}
+				// word临时文件夹忽略
+				if strings.HasPrefix(info.Name(), "~$") {
+					return nil
+				}
 				matched := false
 				for _, match := range matchs {
 					m, err := filepath.Match(match, info.Name())
