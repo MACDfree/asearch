@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .searcher {
+            margin: 10px 0;
+        }
+
+        #query {
+            width: 400px;
+            height: 30px;
+            font-size: 20px;
+        }
+
+        .result-status {
+            font-size: 13px;
+            margin-bottom: 10px;
+            color: #777;
+        }
+
+        .result-list {
+            margin-bottom: 30px;
+        }
+
+        .description {
+            font-size: 12px;
+        }
+
+        .title {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .title>a {
+            text-decoration: auto;
+        }
+
+        .field {
+            float: left;
+            background-color: #dde;
+            margin-right: 10px;
+        }
+    </style>
+    <title>搜索</title>
+</head>
+
+<body>
+    <div class="body">
+        <div class="searcher">
+            <form action="search" method="get">
+                <input type="text" name="query" id="query">
+            </form>
+        </div>
+        <div class="result-status">
+            <span>总条数：{{.total}}</span> <span>查询耗时：{{.took}}</span>
+        </div>
+        <div class="result">
+            {{range .list}}
+            <div class="result-list">
+                <div class="title">
+                    <a href="">{{.Path}}</a>
+                </div>
+                <div class="description">
+                    {{range $key,$value := .Fragments}}
+                    <div class="des-item">
+                        {{if eq $key "Name"}}
+                        <div class="field">文件名称</div>
+                        {{else if eq $key "Content"}}
+                        <div class="field">文件内容</div>
+                        {{end}}
+                        <div class="values">
+                            {{range $value}}
+                            <div class="value">{{ . | unescaped }}</div>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+            <div class="pager">
+                {{range $index,$value := .pager}}
+                {{$i := add $index 1}}
+                {{if eq $i $.currentPage}}
+                <span>{{$i}}</span> |
+                {{else}}
+                <a href="{{$value}}">{{$i}}</a> |
+                {{end}}
+                {{end}}
+            </div>
+        </div>
+    </div>
+    <script>
+        function getQueryString(name) {
+            let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            let r = window.location.search.substr(1).match(reg);
+            if (r != null) {
+                return decodeURIComponent(r[2]);
+            };
+            return "";
+        }
+        var query = getQueryString("query");
+        if(query!="") {
+            document.getElementById("query").value=query;
+        }
+    </script>
+</body>
+
+</html>

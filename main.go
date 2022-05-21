@@ -2,14 +2,21 @@ package main
 
 import (
 	"asearch/config"
+	"embed"
 	"fmt"
+	"html/template"
 	"io/fs"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
+	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"baliance.com/gooxml/document"
@@ -22,6 +29,9 @@ import (
 	"github.com/huichen/sego"
 	"github.com/pkg/errors"
 )
+
+//go:embed template/*
+var f embed.FS
 
 func main() {
 	defer func() {
@@ -36,17 +46,22 @@ func main() {
 	reBuild := ""
 	if err == nil {
 		log.Printf("索引文件%s已存在\n", config.Conf.IndexPath)
-		fmt.Println("是否需要重建索引？（默认：n）")
-		fmt.Scanln(&reBuild)
-		reBuild = strings.ToLower(reBuild)
-		if reBuild == "" {
+		if config.Conf.Rebuild {
+			fmt.Println("是否需要重建索引？y/n（默认：n）")
+			fmt.Scanln(&reBuild)
+			reBuild = strings.ToLower(reBuild)
+			if reBuild == "" {
+				reBuild = "n"
+			}
+		} else {
 			reBuild = "n"
 		}
 	} else {
 		reBuild = "y"
 		log.Printf("索引文件%s不存在\n", config.Conf.IndexPath)
 	}
-	if reBuild == "y" {
+
+	if strings.ToLower(reBuild) == "y" {
 		log.Println("开始创建索引")
 		BuildIndex(config.Conf.IndexPath)
 		log.Println("结束创建索引")
@@ -61,22 +76,50 @@ func main() {
 
 	log.Println("准备提供搜索服务")
 	r := gin.Default()
-	r.GET("/search", func(c *gin.Context) {
-		str := c.Query("query")
+
+	templ := template.Must(
+		template.New("").Funcs(template.FuncMap{
+			"unescaped": func(html string) any {
+				return template.HTML(html)
+			},
+			"add": func(a, b int) any {
+				return a + b
+			},
+		}).ParseFS(f, "template/*.html"))
+	r.SetHTMLTemplate(templ)
+	r.GET("/", func(ctx *gin.Context) {
+		ctx.HTML(200, "index.html", nil)
+	})
+	r.GET("/search", func(ctx *gin.Context) {
+		str := ctx.Query("query")
+		fromStr := ctx.Query("from")
+		var from int
+		if fromStr == "" {
+			from = 0
+		} else {
+			from, err = strconv.Atoi(fromStr)
+			if err != nil {
+				log.Printf("%+v", err)
+				from = 0
+			}
+		}
 		if str == "" {
-			c.JSON(http.StatusBadRequest, gin.H{
+			ctx.JSON(http.StatusBadRequest, gin.H{
 				"message": "参数错误",
 			})
 			return
 		}
 		query := bleve.NewQueryStringQuery(str)
 		search := bleve.NewSearchRequest(query)
+		search.From = from
 		search.Highlight = bleve.NewHighlight()
 		search.Size = 10
+		// 按照修改时间倒序排
+		search.SortBy([]string{"-ModifiedTime", "_score"})
 		searchResults, err := index.Search(search)
 		if err != nil {
 			log.Printf("%+v", errors.Wrap(err, "查询失败"))
-			c.JSON(http.StatusInternalServerError, gin.H{
+			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"message": "查询失败",
 			})
 			return
@@ -89,14 +132,40 @@ func main() {
 				Fragments: r.Fragments,
 			})
 		}
-		c.JSON(200, gin.H{
-			"list":     list,
-			"total":    searchResults.Total,
-			"took":     searchResults.Took,
-			"pageSize": searchResults.Request.Size,
+		total := searchResults.Total
+		pageSize := searchResults.Request.Size
+		currentPage := from/pageSize + 1
+		pages := total / uint64(pageSize)
+		if total%uint64(pageSize) != 0 {
+			pages = pages + 1
+		}
+		pager := make([]string, 0, pages)
+		for i := 0; i < int(pages); i++ {
+			pager = append(pager, "search?query="+url.QueryEscape(str)+"&from="+strconv.Itoa(i*pageSize))
+		}
+
+		ctx.HTML(200, "search.html", gin.H{
+			"list":        list,
+			"total":       searchResults.Total,
+			"took":        searchResults.Took,
+			"pageSize":    searchResults.Request.Size,
+			"currentPage": currentPage,
+			"pager":       pager,
 		})
 	})
-	r.Run("127.0.0.1:9900")
+	go r.Run("127.0.0.1:9900")
+	if config.Conf.OpenBrowserOnStart {
+		openBrowser()
+	}
+	select {}
+}
+
+func openBrowser() {
+	if runtime.GOOS == "windows" {
+		cmd := exec.Command(`cmd`, `/c`, `start`, `http://localhost:9900`)
+		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+		cmd.Start()
+	}
 }
 
 type SearchResult struct {
@@ -140,9 +209,9 @@ func BuildIndex(indexPath string) {
 			if err != nil {
 				log.Printf("%+v\n", err)
 			}
-			fileInfo.Content = content
+			fileInfo.Document.Content = content
 			fmt.Println(fileInfo.Path, "start")
-			index.Index(fileInfo.Path, fileInfo)
+			index.Index(fileInfo.Path, fileInfo.Document)
 			fmt.Println(fileInfo.Path, "end")
 		}
 	}
@@ -150,7 +219,12 @@ func BuildIndex(indexPath string) {
 }
 
 type FileInfo struct {
-	Path         string
+	Path     string
+	Document *FileDocument
+}
+
+type FileDocument struct {
+	Name         string
 	ModifiedTime time.Time
 	Content      string
 }
@@ -203,8 +277,11 @@ func findFiles(paths []string, matchs []string, ignores []string) <-chan *FileIn
 					}
 				}
 				filePaths <- &FileInfo{
-					Path:         path,
-					ModifiedTime: info.ModTime(),
+					Path: path,
+					Document: &FileDocument{
+						Name:         info.Name(),
+						ModifiedTime: info.ModTime(),
+					},
 				}
 				return nil
 			})

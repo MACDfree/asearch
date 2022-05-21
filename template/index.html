@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="zh-cmn-Hans">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        .searcher {
+            width: 410px;
+            height: 300px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            right: 0;
+            margin: auto;
+        }
+
+        .searcher>h1 {
+            text-align: center;
+        }
+
+        #query {
+            width: 400px;
+            height: 30px;
+            font-size: 20px;
+        }
+    </style>
+    <title>搜索</title>
+</head>
+
+<body>
+    <div class="searcher">
+        <h1>本地全文检索</h1>
+        <form action="search" method="get">
+            <input type="text" name="query" id="query">
+        </form>
+    </div>
+</body>
+
+</html>

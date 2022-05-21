@@ -10,9 +10,11 @@ import (
 )
 
 type Config struct {
-	IndexPath   string             `json:"indexPath"`
-	Matches     []FileMatchPattern `json:"matches"`
-	MaxFileSize int64              `json:"maxFileSizeMB"`
+	IndexPath          string             `json:"indexPath"`
+	Matches            []FileMatchPattern `json:"matches"`
+	MaxFileSize        int64              `json:"maxFileSizeMB"`
+	Rebuild            bool               `json:"rebuild"`
+	OpenBrowserOnStart bool               `json:"openBrowserOnStart"`
 }
 
 type FileMatchPattern struct {

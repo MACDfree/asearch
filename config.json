@@ -17,5 +17,7 @@
             ]
         }
     ],
-    "maxFileSizeMB": 5
+    "maxFileSizeMB": 5,
+    "rebuild": false,
+    "openBrowserOnStart": true
 }
