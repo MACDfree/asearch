@@ -67,7 +67,7 @@
             {{range .list}}
             <div class="result-list">
                 <div class="title">
-                    <a href="">{{.Path}}</a>
+                    <a href="#" onclick="openFile(this)">{{.Path}}</a>
                 </div>
                 <div class="description">
                     {{range $key,$value := .Fragments}}
@@ -109,8 +109,13 @@
             return "";
         }
         var query = getQueryString("query");
-        if(query!="") {
-            document.getElementById("query").value=query;
+        if (query != "") {
+            document.getElementById("query").value = query;
+        }
+        function openFile(source) {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', '/open?path=' + source.innerHTML, true);
+            xhr.send();
         }
     </script>
 </body>

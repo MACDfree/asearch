@@ -153,16 +153,23 @@ func main() {
 			"pager":       pager,
 		})
 	})
+	r.GET("/open", func(ctx *gin.Context) {
+		path := ctx.Query("path")
+		openLocal(path)
+		ctx.JSON(200, gin.H{
+			"message": "success",
+		})
+	})
 	go r.Run("127.0.0.1:9900")
 	if config.Conf.OpenBrowserOnStart {
-		openBrowser()
+		openLocal("http://127.0.0.1:9900")
 	}
 	select {}
 }
 
-func openBrowser() {
+func openLocal(path string) {
 	if runtime.GOOS == "windows" {
-		cmd := exec.Command(`cmd`, `/c`, `start`, `http://localhost:9900`)
+		cmd := exec.Command(`cmd`, `/c`, `start`, path)
 		cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 		cmd.Start()
 	}
