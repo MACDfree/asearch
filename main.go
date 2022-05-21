@@ -2,6 +2,7 @@ package main
 
 import (
 	"asearch/config"
+	"asearch/store"
 	"embed"
 	"fmt"
 	"html/template"
@@ -85,6 +86,9 @@ func main() {
 			"add": func(a, b int) any {
 				return a + b
 			},
+			"timeformat": func(t time.Time) string {
+				return t.Format("2006-01-02 15:04:05")
+			},
 		}).ParseFS(f, "template/*.html"))
 	r.SetHTMLTemplate(templ)
 	r.GET("/", func(ctx *gin.Context) {
@@ -113,7 +117,7 @@ func main() {
 		search := bleve.NewSearchRequest(query)
 		search.From = from
 		search.Highlight = bleve.NewHighlight()
-		search.Size = 10
+		search.Size = 20
 		// 按照修改时间倒序排
 		search.SortBy([]string{"-ModifiedTime", "_score"})
 		searchResults, err := index.Search(search)
@@ -127,9 +131,12 @@ func main() {
 
 		list := make([]SearchResult, 0)
 		for _, r := range searchResults.Hits {
+			fileMetaInfo := &FileMetaInfo{}
+			store.GetStore().Get("fileinfo", r.ID, fileMetaInfo)
 			list = append(list, SearchResult{
-				Path:      r.ID,
-				Fragments: r.Fragments,
+				Path:         r.ID,
+				ModifiedTime: fileMetaInfo.ModifiedTime,
+				Fragments:    r.Fragments,
 			})
 		}
 		total := searchResults.Total
@@ -140,8 +147,12 @@ func main() {
 			pages = pages + 1
 		}
 		pager := make([]string, 0, pages)
-		for i := 0; i < int(pages); i++ {
-			pager = append(pager, "search?query="+url.QueryEscape(str)+"&from="+strconv.Itoa(i*pageSize))
+		if pages == 1 {
+			pager = nil
+		} else {
+			for i := 0; i < int(pages); i++ {
+				pager = append(pager, "search?query="+url.QueryEscape(str)+"&from="+strconv.Itoa(i*pageSize))
+			}
 		}
 
 		ctx.HTML(200, "search.html", gin.H{
@@ -176,8 +187,9 @@ func openLocal(path string) {
 }
 
 type SearchResult struct {
-	Path      string
-	Fragments search.FieldFragmentMap
+	Path         string
+	ModifiedTime time.Time
+	Fragments    search.FieldFragmentMap
 }
 
 func BuildIndex(indexPath string) {
@@ -212,6 +224,7 @@ func BuildIndex(indexPath string) {
 
 	for _, match := range config.Conf.Matches {
 		for fileInfo := range findFiles(match.Paths, match.Patterns, match.Ignores) {
+			store.GetStore().Put("fileinfo", fileInfo.Path, FileMetaInfo{ModifiedTime: fileInfo.Document.ModifiedTime})
 			content, err := readFile(fileInfo.Path)
 			if err != nil {
 				log.Printf("%+v\n", err)
@@ -234,6 +247,10 @@ type FileDocument struct {
 	Name         string
 	ModifiedTime time.Time
 	Content      string
+}
+
+type FileMetaInfo struct {
+	ModifiedTime time.Time
 }
 
 func findFiles(paths []string, matchs []string, ignores []string) <-chan *FileInfo {

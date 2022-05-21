@@ -1,10 +1,11 @@
 {
     "version": "1.0",
     "indexPath": "",
+    "dbPath":"",
     "matches": [
         {
             "paths": [
-                "D:\\tmp"
+                "D:\\tmp\\安全整改"
             ],
             "patterns": [
                 "*.txt",

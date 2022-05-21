@@ -44,6 +44,11 @@
             text-decoration: auto;
         }
 
+        .title>span {
+            font-size: 12px;
+            color: #999;
+        }
+
         .field {
             float: left;
             background-color: #dde;
@@ -61,13 +66,14 @@
             </form>
         </div>
         <div class="result-status">
-            <span>总条数：{{.total}}</span> <span>查询耗时：{{.took}}</span>
+            <span>找到 {{.total}} 条结果（用时 {{.took}}）</span>
         </div>
         <div class="result">
             {{range .list}}
             <div class="result-list">
                 <div class="title">
                     <a href="javascript:void(0)" onclick="openFile(this)">{{.Path}}</a>
+                    <span>修改时间：{{timeformat .ModifiedTime}}</span>
                 </div>
                 <div class="description">
                     {{range $key,$value := .Fragments}}

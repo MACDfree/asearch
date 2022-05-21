@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	IndexPath          string             `json:"indexPath"`
+	DBPath             string             `json:"dbPath"`
 	Matches            []FileMatchPattern `json:"matches"`
 	MaxFileSize        int64              `json:"maxFileSizeMB"`
 	Rebuild            bool               `json:"rebuild"`
