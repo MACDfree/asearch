@@ -22,6 +22,7 @@ type FileReader interface {
 	Read(path string) (string, error)
 }
 
+// 接口函数，https://geektutu.com/post/7days-golang-q1.html
 type FileReaderFunc func(string) (string, error)
 
 func (r FileReaderFunc) Read(path string) (string, error) {
