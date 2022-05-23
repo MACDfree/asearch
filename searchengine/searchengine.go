@@ -9,6 +9,8 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"sync"
+	"time"
 
 	"github.com/blevesearch/bleve/v2"
 	"github.com/blevesearch/bleve/v2/analysis"
@@ -47,19 +49,27 @@ func BuildIndex(indexPath string) {
 		return
 	}
 
-	for _, match := range config.Conf.Matches {
-		for fileInfo := range filefinder.FindFiles(match.Paths, match.Patterns, match.Ignores) {
-			fileinfostore.Put(fileInfo.Path, fileinfostore.FileMetaInfo{ModifiedTime: fileInfo.Document.ModifiedTime})
-			content, err := filereader.Read(fileInfo.Path)
+	start := time.Now()
+	fileInfos := filefinder.Find(config.Conf.Matches)
+	var wg sync.WaitGroup
+	for fileInfo := range fileInfos {
+		fileinfostore.Put(fileInfo.Path, fileinfostore.FileMetaInfo{ModifiedTime: fileInfo.Document.ModifiedTime})
+		wg.Add(1)
+		go func(f *filefinder.FileInfo) {
+			start := time.Now()
+			defer wg.Done()
+			content, err := filereader.Read(f.Path)
 			if err != nil {
 				log.Printf("%+v\n", err)
 			}
-			fileInfo.Document.Content = content
-			fmt.Println(fileInfo.Path, "start")
-			index.Index(fileInfo.Path, fileInfo.Document)
-			fmt.Println(fileInfo.Path, "end")
-		}
+			f.Document.Content = content
+			index.Index(f.Path, f.Document)
+			fmt.Println(f.Path, time.Since(start))
+		}(fileInfo)
 	}
+	wg.Wait()
+	log.Println("创建索引耗时：", time.Since(start))
+
 	index.Close()
 	runtime.GC()
 }
