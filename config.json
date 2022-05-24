@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "indexPath": "",
-    "dbPath":"",
+    "dbPath": "",
     "matches": [
         {
             "paths": [
@@ -19,6 +19,6 @@
         }
     ],
     "maxFileSizeMB": 5,
-    "rebuild": false,
-    "openBrowserOnStart": true
+    "openBrowserOnStart": true,
+    "delayHour": 1
 }

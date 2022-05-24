@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -22,7 +21,7 @@ var once sync.Once
 
 func GetStore1() *BadgerDB {
 	once.Do(func() {
-		opt := badger.DefaultOptions(filepath.Join(config.Conf.DBPath, "store.db")).
+		opt := badger.DefaultOptions(config.Conf.DBPath).
 			WithCompression(options.Snappy).
 			WithValueLogFileSize(10 * 1024 * 1024).
 			WithNumLevelZeroTables(1).

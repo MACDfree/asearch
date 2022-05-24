@@ -2,62 +2,63 @@ package main
 
 import (
 	"asearch/config"
+	"asearch/logger"
 	"asearch/searchengine"
 	"asearch/util"
 	"asearch/webserver"
-	"fmt"
-	"log"
 	"os"
-	"strings"
 
 	"github.com/blevesearch/bleve/v2"
 )
 
 func main() {
-	defer func() {
-		if err := recover(); err != nil {
-			log.Printf("%+v", err)
-			select {}
-		}
-	}()
-	log.Println("asearch开始执行")
-	log.Println("判断索引文件是否存在")
+	logger.Info("asearch开始执行")
+	logger.Info("判断索引文件是否存在")
 	_, err := os.Stat(config.Conf.IndexPath)
-	reBuild := ""
-	if err == nil {
-		log.Printf("索引文件%s已存在\n", config.Conf.IndexPath)
-		if config.Conf.Rebuild {
-			fmt.Println("是否需要重建索引？y/n（默认：n）")
-			fmt.Scanln(&reBuild)
-			reBuild = strings.ToLower(reBuild)
-			if reBuild == "" {
-				reBuild = "n"
-			}
+	if err != nil {
+		logger.Infof("索引文件%s不存在", config.Conf.IndexPath)
+		logger.Info("判断数据文件是否存在")
+		_, err = os.Stat(config.Conf.DBPath)
+		if err != nil {
+			logger.Infof("数据文件%s不存在", config.Conf.DBPath)
 		} else {
-			reBuild = "n"
+			logger.Infof("数据文件%s存在", config.Conf.DBPath)
+			logger.Info("删除数据文件")
+			os.RemoveAll(config.Conf.DBPath)
 		}
-	} else {
-		reBuild = "y"
-		log.Printf("索引文件%s不存在\n", config.Conf.IndexPath)
-	}
-
-	if strings.ToLower(reBuild) == "y" {
-		log.Println("开始创建索引")
+		logger.Info("开始创建索引")
 		searchengine.BuildIndex(config.Conf.IndexPath)
-		log.Println("结束创建索引")
-		log.Println("建议重新启动程序，以释放资源")
+		logger.Info("结束创建索引，建议重新启动程序，以释放资源")
+	} else {
+		logger.Infof("索引文件%s存在", config.Conf.IndexPath)
+		logger.Info("判断数据文件是否存在")
+		_, err = os.Stat(config.Conf.DBPath)
+		if err != nil {
+			logger.Infof("数据文件%s不存在", config.Conf.DBPath)
+			logger.Info("删除索引文件")
+			os.RemoveAll(config.Conf.IndexPath)
+			logger.Info("开始创建索引")
+			searchengine.BuildIndex(config.Conf.IndexPath)
+			logger.Info("结束创建索引，建议重新启动程序，以释放资源")
+		} else {
+			logger.Infof("数据文件%s存在", config.Conf.DBPath)
+		}
 	}
 
-	log.Println("打开索引文件")
+	logger.Info("打开索引文件")
 	index, err := bleve.Open(config.Conf.IndexPath)
 	if err != nil {
 		panic(err)
 	}
+	logger.Info("执行一次索引更新操作")
+	searchengine.ReBuildIndex(index)
+	logger.Info("开始更新索引定时任务")
 	searchengine.StartRebuildJob(index)
 
-	log.Println("准备提供搜索服务")
+	logger.Info("准备提供搜索服务")
 	go webserver.Run("127.0.0.1:9900", index)
 	if config.Conf.OpenBrowserOnStart {
+		logger.Info("自动打开本地浏览器")
 		util.OpenLocal("http://127.0.0.1:9900")
 	}
 	select {}

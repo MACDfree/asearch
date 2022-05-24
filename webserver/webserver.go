@@ -1,11 +1,11 @@
 package webserver
 
 import (
+	"asearch/logger"
 	"asearch/store/fileinfostore"
 	"asearch/util"
 	"embed"
 	"html/template"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -21,7 +21,11 @@ import (
 var f embed.FS
 
 func Run(addr string, index bleve.Index) {
-	r := gin.Default()
+	// 禁用终端打印颜色
+	gin.DisableConsoleColor()
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(Logger(), gin.Recovery())
 
 	r.SetHTMLTemplate(getHTMLTemplate())
 
@@ -47,7 +51,7 @@ func Run(addr string, index bleve.Index) {
 			var err error
 			from, err = strconv.Atoi(fromStr)
 			if err != nil {
-				log.Printf("%+v", err)
+				logger.Errorf("%+v", err)
 				from = 0
 			}
 		}
@@ -66,7 +70,7 @@ func Run(addr string, index bleve.Index) {
 		search.SortBy([]string{"-ModifiedTime", "_score"})
 		searchResults, err := index.Search(search)
 		if err != nil {
-			log.Printf("%+v", errors.Wrap(err, "查询失败"))
+			logger.Errorf("%+v", errors.Wrap(err, "查询失败"))
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"message": "查询失败",
 			})

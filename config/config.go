@@ -13,8 +13,8 @@ type Config struct {
 	IndexPath          string             `json:"indexPath"`
 	DBPath             string             `json:"dbPath"`
 	Matches            []FileMatchPattern `json:"matches"`
-	MaxFileSize        int64              `json:"maxFileSizeMB"`
-	Rebuild            bool               `json:"rebuild"`
+	MaxFileSizeMB      int64              `json:"maxFileSizeMB"`
+	DelayHour          int                `json:"delayHour"`
 	OpenBrowserOnStart bool               `json:"openBrowserOnStart"`
 }
 
@@ -40,4 +40,5 @@ func init() {
 		panic(errors.Wrap(err, "配置文件config.json解析失败"))
 	}
 	Conf.IndexPath = filepath.Join(Conf.IndexPath, "asearch.index")
+	Conf.DBPath = filepath.Join(Conf.DBPath, "asearch.db")
 }

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
-	"path/filepath"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -21,7 +20,7 @@ var onceBoltDB sync.Once
 
 func GetStore() Store {
 	once.Do(func() {
-		db, err := bolt.Open(filepath.Join(config.Conf.DBPath, "asearch.db"), 0600, nil)
+		db, err := bolt.Open(config.Conf.DBPath, 0600, nil)
 		if err != nil {
 			log.Fatalf("%+v", err)
 		}

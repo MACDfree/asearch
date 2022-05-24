@@ -4,10 +4,9 @@ import (
 	"asearch/config"
 	"asearch/filefinder"
 	"asearch/filereader"
+	"asearch/logger"
 	"asearch/store/fileinfostore"
 	"fmt"
-	"log"
-	"os"
 	"runtime"
 	"sync"
 	"time"
@@ -17,7 +16,6 @@ import (
 
 func BuildIndex(indexPath string) {
 	mapping := bleve.NewIndexMapping()
-	os.RemoveAll(indexPath)
 
 	err := mapping.AddCustomTokenizer("sego",
 		map[string]interface{}{
@@ -49,14 +47,18 @@ func BuildIndex(indexPath string) {
 	fileInfos := filefinder.Find(config.Conf.Matches)
 	var wg sync.WaitGroup
 	for fileInfo := range fileInfos {
-		fileinfostore.Put(fileInfo.Path, fileinfostore.FileMetaInfo{ModifiedTime: fileInfo.Document.ModifiedTime})
+		fileinfostore.Put(fileInfo.Path,
+			fileinfostore.FileMetaInfo{
+				ModifiedTime: fileInfo.Document.ModifiedTime,
+				UpdateTime:   time.Now(),
+			})
 		wg.Add(1)
 		go func(f *filefinder.FileInfo) {
 			start := time.Now()
 			defer wg.Done()
 			content, err := filereader.Read(f.Path)
 			if err != nil {
-				log.Printf("%+v\n", err)
+				logger.Errorf("%+v\n", err)
 			}
 			f.Document.Content = content
 			index.Index(f.Path, f.Document)
@@ -64,24 +66,24 @@ func BuildIndex(indexPath string) {
 		}(fileInfo)
 	}
 	wg.Wait()
-	log.Println("创建索引耗时：", time.Since(start))
+	logger.Info("创建索引耗时：", time.Since(start))
 
 	index.Close()
 	runtime.GC()
 }
 
 func StartRebuildJob(index bleve.Index) {
-	ticker := time.NewTicker(20 * time.Minute)
+	ticker := time.NewTicker(time.Duration(config.Conf.DelayHour) * time.Hour)
 	go func(t *time.Ticker) {
 		for {
 			<-t.C
-			log.Println("开始进行索引更新")
-			reBuildIndex(index)
+			logger.Info("开始进行索引更新")
+			ReBuildIndex(index)
 		}
 	}(ticker)
 }
 
-func reBuildIndex(index bleve.Index) {
+func ReBuildIndex(index bleve.Index) {
 	start := time.Now()
 	fileInfos := filefinder.Find(config.Conf.Matches)
 	var wg sync.WaitGroup
@@ -102,7 +104,7 @@ func reBuildIndex(index bleve.Index) {
 			defer wg.Done()
 			content, err := filereader.Read(f.Path)
 			if err != nil {
-				log.Printf("%+v\n", err)
+				logger.Errorf("%+v\n", err)
 			}
 			f.Document.Content = content
 			index.Index(f.Path, f.Document)
@@ -111,13 +113,14 @@ func reBuildIndex(index bleve.Index) {
 	}
 	wg.Wait()
 
+	timeout := time.Since(start)
 	fileinfostore.ForEach(func(path string, value fileinfostore.FileMetaInfo) bool {
-		if time.Since(value.UpdateTime) > 40*time.Minute {
+		if time.Since(value.UpdateTime) > timeout+10*time.Second {
 			index.Delete(path)
-			log.Println("删除索引", path)
+			logger.Info("删除索引", path)
 			return true
 		}
 		return false
 	})
-	log.Println("更新索引耗时：", time.Since(start))
+	logger.Info("更新索引耗时：", time.Since(start))
 }

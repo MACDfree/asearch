@@ -2,8 +2,8 @@ package filefinder
 
 import (
 	"asearch/config"
+	"asearch/logger"
 	"io/fs"
-	"log"
 	"path/filepath"
 	"strings"
 	"time"
@@ -27,7 +27,7 @@ func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan
 				for _, ignore := range ignores {
 					m, err := filepath.Match(ignore, info.Name())
 					if err != nil {
-						log.Printf("%+v\n", err)
+						logger.Errorf("%+v\n", err)
 						return nil
 					}
 					if m {
@@ -36,7 +36,7 @@ func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan
 				}
 				return nil
 			}
-			if info.Size() > config.Conf.MaxFileSize*1024*1024 {
+			if info.Size() > config.Conf.MaxFileSizeMB*1024*1024 {
 				return nil
 			}
 			// word临时文件夹忽略
@@ -47,7 +47,7 @@ func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan
 			for _, match := range matchs {
 				m, err := filepath.Match(match, info.Name())
 				if err != nil {
-					log.Printf("%+v\n", err)
+					logger.Errorf("%+v\n", err)
 					return nil
 				}
 				if m {
@@ -61,7 +61,7 @@ func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan
 			for _, ignore := range ignores {
 				m, err := filepath.Match(ignore, info.Name())
 				if err != nil {
-					log.Printf("%+v\n", err)
+					logger.Errorf("%+v\n", err)
 					return nil
 				}
 				if m {
@@ -78,7 +78,7 @@ func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan
 			return nil
 		})
 		if err != nil {
-			log.Printf("%+v\n", err)
+			logger.Errorf("%+v\n", err)
 		}
 	}
 }
