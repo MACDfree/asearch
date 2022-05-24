@@ -30,4 +30,3 @@ bolt，kv存储，go.etcd.io/bbolt
 ## 局限
 
 1. 无法解析doc和xls文件，只能解析docx和xlsx
-2. 还没有实现增量的索引重建功能
