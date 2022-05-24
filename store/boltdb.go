@@ -55,17 +55,45 @@ func (b *BoltDB) Get(bucketName string, key string, value any) {
 	err := b.db.View(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(bucketName))
 		if bucket == nil {
-			return errors.New("asearch bucket 不存在")
+			return errors.Errorf("bucket %s 不存在", bucketName)
 		}
 		val := bucket.Get([]byte(key))
 		if val == nil {
 			return errors.Errorf("key %s 不存在", key)
 		}
 
-		d := gob.NewDecoder(bytes.NewReader(val))
-		return d.Decode(value)
+		return BytesTo(val, value)
 	})
 	if err != nil {
 		panic(err)
 	}
+}
+
+func (b *BoltDB) ForEachDelete(bucketName string, test func(key string, value []byte) bool) {
+	err := b.db.Update(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(bucketName))
+		if bucket == nil {
+			return errors.Errorf("bucket %s 不存在", bucketName)
+		}
+
+		deleteKeys := make([][]byte, 0, 10)
+		bucket.ForEach(func(k, v []byte) error {
+			if test(string(k), v) {
+				deleteKeys = append(deleteKeys, k)
+			}
+			return nil
+		})
+		for _, deleteKey := range deleteKeys {
+			bucket.Delete(deleteKey)
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+}
+
+func BytesTo(value []byte, out any) error {
+	d := gob.NewDecoder(bytes.NewReader(value))
+	return d.Decode(out)
 }

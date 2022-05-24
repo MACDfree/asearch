@@ -53,6 +53,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	searchengine.StartRebuildJob(index)
 
 	log.Println("准备提供搜索服务")
 	go webserver.Run("127.0.0.1:9900", index)
