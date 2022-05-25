@@ -6,7 +6,7 @@ import (
 	"baliance.com/gooxml/document"
 )
 
-func wordRead(path string) (string, error) {
+func docxRead(path string) (string, error) {
 	doc, err := document.Open(path)
 	if err != nil {
 		return "", err
@@ -22,5 +22,5 @@ func wordRead(path string) (string, error) {
 }
 
 func init() {
-	Regist("docx", FileReaderFunc(wordRead))
+	Regist("docx", FileReaderFunc(docxRead))
 }

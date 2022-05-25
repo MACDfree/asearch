@@ -6,7 +6,7 @@ import (
 	"baliance.com/gooxml/spreadsheet"
 )
 
-func excelRead(path string) (string, error) {
+func xlsxRead(path string) (string, error) {
 	xls, err := spreadsheet.Open(path)
 	if err != nil {
 		return "", nil
@@ -26,5 +26,5 @@ func excelRead(path string) (string, error) {
 }
 
 func init() {
-	Regist("xlsx", FileReaderFunc(excelRead))
+	Regist("xlsx", FileReaderFunc(xlsxRead))
 }
