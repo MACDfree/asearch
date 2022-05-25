@@ -1,7 +1,6 @@
 package logger
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 
@@ -27,8 +26,8 @@ func init() {
 		Compress:   false,
 	}
 	// 同时输出到文件和标准输出中
-	w := io.MultiWriter(lumberJackLogger, os.Stdout)
-	writeSyncer := zapcore.AddSync(w)
+	// w := io.MultiWriter(lumberJackLogger, os.Stdout)
+	writeSyncer := zapcore.AddSync(lumberJackLogger)
 	encoderConfig := zap.NewProductionEncoderConfig()
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder

@@ -3,6 +3,7 @@ package main
 import (
 	"asearch/config"
 	"asearch/logger"
+	"asearch/notification"
 	"asearch/searchengine"
 	"asearch/util"
 	"asearch/webserver"
@@ -56,10 +57,10 @@ func main() {
 	searchengine.StartRebuildJob(index)
 
 	logger.Info("准备提供搜索服务")
-	go webserver.Run("127.0.0.1:9900", index)
+	go webserver.Run(config.Conf.Addr, index)
 	if config.Conf.OpenBrowserOnStart {
 		logger.Info("自动打开本地浏览器")
-		util.OpenLocal("http://127.0.0.1:9900")
+		util.OpenLocal("http://" + config.Conf.Addr)
 	}
-	select {}
+	notification.Run()
 }

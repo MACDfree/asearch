@@ -10,6 +10,7 @@ import (
 )
 
 type Config struct {
+	Addr               string             `json:"addr"`
 	IndexPath          string             `json:"indexPath"`
 	DBPath             string             `json:"dbPath"`
 	Matches            []FileMatchPattern `json:"matches"`
@@ -41,4 +42,7 @@ func init() {
 	}
 	Conf.IndexPath = filepath.Join(Conf.IndexPath, "asearch.index")
 	Conf.DBPath = filepath.Join(Conf.DBPath, "asearch.db")
+	if Conf.Addr == "" {
+		Conf.Addr = "127.0.0.1:9900"
+	}
 }
