@@ -27,6 +27,8 @@ gooxml，msoffice解析，baliance.com/gooxml
 
 bolt，kv存储，go.etcd.io/bbolt
 
+systray，系统托盘图标，github.com/getlantern/systray
+
 ## 局限
 
 1. 无法解析doc和xls文件，只能解析docx和xlsx
