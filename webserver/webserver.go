@@ -3,7 +3,6 @@ package webserver
 import (
 	"asearch/logger"
 	"asearch/store/fileinfostore"
-	"asearch/util"
 	"embed"
 	"html/template"
 	"net/http"
@@ -15,6 +14,7 @@ import (
 	"github.com/blevesearch/bleve/v2/search"
 	"github.com/gin-gonic/gin"
 	"github.com/pkg/errors"
+	"github.com/skratchdot/open-golang/open"
 )
 
 //go:embed template/*
@@ -35,7 +35,11 @@ func Run(addr string, index bleve.Index) {
 
 	r.GET("/open", func(ctx *gin.Context) {
 		path := ctx.Query("path")
-		util.OpenLocal(path)
+		logger.Infof("将要打开的文件路径为：'%s'", path)
+		err := open.Start(path)
+		if err != nil {
+			logger.Error(errors.Cause(err))
+		}
 		ctx.JSON(200, gin.H{
 			"message": "success",
 		})

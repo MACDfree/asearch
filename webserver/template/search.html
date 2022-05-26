@@ -51,8 +51,10 @@
 
         .field {
             float: left;
-            background-color: #dde;
-            margin-right: 10px;
+            margin: -1px 5px -1px 0;
+            color: #555;
+            border: solid #666 1px;
+            font-weight: bold;
         }
     </style>
     <title>搜索</title>
@@ -120,7 +122,7 @@
         }
         function openFile(source) {
             var xhr = new XMLHttpRequest();
-            xhr.open('GET', '/open?path=' + source.innerHTML, true);
+            xhr.open('GET', '/open?path=' + encodeURIComponent(source.innerHTML), true);
             xhr.send();
         }
     </script>

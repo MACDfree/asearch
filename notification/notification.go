@@ -3,9 +3,10 @@ package notification
 import (
 	"asearch/config"
 	"asearch/logger"
-	"asearch/util"
 
 	"github.com/getlantern/systray"
+	"github.com/pkg/errors"
+	"github.com/skratchdot/open-golang/open"
 )
 
 func Run() {
@@ -26,9 +27,15 @@ func onReady() {
 	for {
 		select {
 		case <-mOpen.ClickedCh:
-			util.OpenLocal("http://" + config.Conf.Addr)
+			err := open.Start("http://" + config.Conf.Addr)
+			if err != nil {
+				logger.Error(errors.Cause(err))
+			}
 		case <-mConfig.ClickedCh:
-			util.OpenLocal(".")
+			err := open.Start(".")
+			if err != nil {
+				logger.Error(errors.Cause(err))
+			}
 		case <-mQuit.ClickedCh:
 			systray.Quit()
 			return

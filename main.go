@@ -5,11 +5,12 @@ import (
 	"asearch/logger"
 	"asearch/notification"
 	"asearch/searchengine"
-	"asearch/util"
 	"asearch/webserver"
 	"os"
 
 	"github.com/blevesearch/bleve/v2"
+	"github.com/pkg/errors"
+	"github.com/skratchdot/open-golang/open"
 )
 
 func main() {
@@ -60,7 +61,10 @@ func main() {
 	go webserver.Run(config.Conf.Addr, index)
 	if config.Conf.OpenBrowserOnStart {
 		logger.Info("自动打开本地浏览器")
-		util.OpenLocal("http://" + config.Conf.Addr)
+		err := open.Start("http://" + config.Conf.Addr)
+		if err != nil {
+			logger.Error(errors.Cause(err))
+		}
 	}
 	notification.Run()
 }
