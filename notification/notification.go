@@ -20,15 +20,17 @@ func onReady() {
 	systray.SetTitle("本地全文检索工具")
 	systray.SetTooltip("本地全文检索工具")
 	mOpen := systray.AddMenuItem("打开网页", "打开网页")
+	mConfig := systray.AddMenuItem("打开配置", "打开配置")
 	mQuit := systray.AddMenuItem("退出", "退出工具")
 
 	for {
 		select {
 		case <-mOpen.ClickedCh:
 			util.OpenLocal("http://" + config.Conf.Addr)
+		case <-mConfig.ClickedCh:
+			util.OpenLocal(".")
 		case <-mQuit.ClickedCh:
 			systray.Quit()
-			logger.Info("退出...")
 			return
 		}
 	}
