@@ -58,12 +58,15 @@ func (b *BoltDB) Get(bucketName string, key string, value any) {
 		}
 		val := bucket.Get([]byte(key))
 		if val == nil {
-			return errors.Errorf("key %s 不存在", key)
+			return &KeyNotExistError{Key: key}
 		}
 
 		return BytesTo(val, value)
 	})
 	if err != nil {
+		if _, ok := err.(*KeyNotExistError); ok {
+			return
+		}
 		panic(err)
 	}
 }

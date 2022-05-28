@@ -47,21 +47,27 @@ func BuildIndex(indexPath string) {
 	fileInfos := filefinder.Find(config.Conf.Matches)
 	var wg sync.WaitGroup
 	for fileInfo := range fileInfos {
-		fileinfostore.Put(fileInfo.Path,
-			fileinfostore.FileMetaInfo{
-				ModifiedTime: fileInfo.Document.ModifiedTime,
-				UpdateTime:   time.Now(),
-			})
+
 		wg.Add(1)
 		go func(f *filefinder.FileInfo) {
 			start := time.Now()
 			defer wg.Done()
 			content, err := filereader.Read(f.Path)
 			if err != nil {
-				logger.Errorf("%+v\n", err)
+				logger.Errorf("%+v", err)
+				return
 			}
 			f.Document.Content = content
-			index.Index(f.Path, f.Document)
+			err = index.Index(f.Path, f.Document)
+			if err != nil {
+				logger.Errorf("%+v", err)
+				return
+			}
+			fileinfostore.Put(f.Path,
+				fileinfostore.FileMetaInfo{
+					ModifiedTime: f.Document.ModifiedTime,
+					UpdateTime:   time.Now(),
+				})
 			fmt.Println(f.Path, time.Since(start))
 		}(fileInfo)
 	}

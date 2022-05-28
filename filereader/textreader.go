@@ -12,4 +12,7 @@ func textRead(path string) (string, error) {
 
 func init() {
 	Regist("txt", FileReaderFunc(textRead))
+	Regist("go", FileReaderFunc(textRead))
+	Regist("md", FileReaderFunc(textRead))
+	Regist("java", FileReaderFunc(textRead))
 }
