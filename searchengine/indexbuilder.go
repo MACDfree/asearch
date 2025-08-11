@@ -47,10 +47,9 @@ func BuildIndex(indexPath string) {
 	fileInfos := filefinder.Find(config.Conf.Matches)
 	var wg sync.WaitGroup
 	for fileInfo := range fileInfos {
-
 		wg.Add(1)
 		go func(f *filefinder.FileInfo) {
-			start := time.Now()
+			start2 := time.Now()
 			defer wg.Done()
 			content, err := filereader.Read(f.Path)
 			if err != nil {
@@ -68,7 +67,7 @@ func BuildIndex(indexPath string) {
 					ModifiedTime: f.Document.ModifiedTime,
 					UpdateTime:   time.Now(),
 				})
-			fmt.Println(f.Path, time.Since(start))
+			fmt.Println(f.Path, time.Since(start2))
 		}(fileInfo)
 	}
 	wg.Wait()
