@@ -105,7 +105,7 @@ func ReBuildIndex(index bleve.Index) {
 
 		wg.Add(1)
 		go func(f *filefinder.FileInfo) {
-			start := time.Now()
+			start3 := time.Now()
 			defer wg.Done()
 			content, err := filereader.Read(f.Path)
 			if err != nil {
@@ -113,7 +113,7 @@ func ReBuildIndex(index bleve.Index) {
 			}
 			f.Document.Content = content
 			index.Index(f.Path, f.Document)
-			fmt.Println(f.Path, time.Since(start))
+			fmt.Println(f.Path, time.Since(start3))
 		}(fileInfo)
 	}
 	wg.Wait()
