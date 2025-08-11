@@ -50,7 +50,7 @@ func tokenizerConstructor(config map[string]interface{}, cache *registry.Cache) 
 
 type SegoAnalyzer struct{}
 
-func analyzerConstructor(config map[string]interface{}, cache *registry.Cache) (*analysis.Analyzer, error) {
+func analyzerConstructor(config map[string]interface{}, cache *registry.Cache) (analysis.Analyzer, error) {
 	tokenizerName, ok := config["tokenizer"].(string)
 	if !ok {
 		return nil, errors.New("must specify tokenizer")
@@ -59,7 +59,7 @@ func analyzerConstructor(config map[string]interface{}, cache *registry.Cache) (
 	if err != nil {
 		return nil, err
 	}
-	alz := &analysis.Analyzer{
+	alz := &analysis.DefaultAnalyzer{
 		Tokenizer: tokenizer,
 	}
 	return alz, nil

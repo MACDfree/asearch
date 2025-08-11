@@ -91,7 +91,7 @@ func Run(addr string, index bleve.Index) {
 			})
 		}
 		total := searchResults.Total
-		pageSize := searchResults.Request.Size
+		pageSize := search.Size
 		currentPage := from/pageSize + 1
 		pages := total / uint64(pageSize)
 		if total%uint64(pageSize) != 0 {
@@ -110,7 +110,7 @@ func Run(addr string, index bleve.Index) {
 			"list":        list,
 			"total":       searchResults.Total,
 			"took":        searchResults.Took,
-			"pageSize":    searchResults.Request.Size,
+			"pageSize":    search.Size,
 			"currentPage": currentPage,
 			"pager":       pager,
 		})

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"log"
-	"sync"
 
 	"github.com/pkg/errors"
 	bolt "go.etcd.io/bbolt"
@@ -16,7 +15,6 @@ type BoltDB struct {
 }
 
 var instanceBoltDB *BoltDB
-var onceBoltDB sync.Once
 
 func GetStore() Store {
 	once.Do(func() {

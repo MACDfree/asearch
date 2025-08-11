@@ -4,6 +4,7 @@ import (
 	"asearch/config"
 	"asearch/logger"
 	"io/fs"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -22,6 +23,10 @@ func Find(matches []config.FileMatchPattern) <-chan *FileInfo {
 
 func findFiles(paths []string, matchs []string, ignores []string, fileInfos chan *FileInfo) {
 	for _, rootPath := range paths {
+		if _, err := os.Stat(rootPath); err != nil {
+			logger.Errorf("%+v\n", err)
+			continue
+		}
 		err := filepath.Walk(rootPath, func(path string, info fs.FileInfo, err error) error {
 			if info.IsDir() {
 				for _, ignore := range ignores {
